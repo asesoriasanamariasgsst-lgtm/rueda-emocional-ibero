@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Rueda Emocional – Universidad Iberoamericana</title>
+
+<style>
+body {
+  font-family: Arial, sans-serif;
+  margin: 0;
+  text-align: center;
+  background: #f4f6f8;
+}
+
+/* HEADER */
+header {
+  background: white;
+  padding: 15px;
+  border-bottom: 4px solid #0b3c5d;
+}
+
+header img { height: 60px; }
+
+header h2 {
+  margin: 10px 0 0;
+  font-size: 22px;
+  color: #0b3c5d;
+}
+
+/* RUEDA */
+#wheel {
+  width: 300px;
+  height: 300px;
+  margin: 40px auto;
+  border-radius: 50%;
+  background: conic-gradient(
+    #4caf50 0deg 72deg,
+    #2196f3 72deg 144deg,
+    #3f51b5 144deg 216deg,
+    #ffc107 216deg 288deg,
+    #f44336 288deg 360deg
+  );
+  position: relative;
+  transition: transform 1s ease;
+}
+
+#wheel button {
+  position: absolute;
+  width: 100px;
+  border: none;
+  border-radius: 20px;
+  padding: 6px;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.btn1 { top: 10px; left: 100px; }
+.btn2 { top: 100px; right: -10px; }
+.btn3 { bottom: 10px; right: 60px; }
+.btn4 { bottom: 10px; left: 60px; }
+.btn5 { top: 100px; left: -10px; }
+
+/* MODAL */
+.modal {
+  display: none;
+  position: fixed;
+  inset: 0;
+  color: white;
+  padding-top: 70px;
+  z-index: 1000;
+}
+
+.modal img { width: 140px; }
+
+.modal button {
+  margin-top: 30px;
+  padding: 14px 30px;
+  border: none;
+  border-radius: 30px;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+/* BRILLOS */
+.brillo {
+  position: fixed;
+  width: 40px;
+  top: -40px;
+  animation: caer 2.5s linear forwards;
+  pointer-events: none;
+}
+
+@keyframes caer {
+  to {
+    transform: translateY(100vh) rotate(360deg);
+    opacity: 0;
+  }
+}
+
+/* ESTADISTICAS */
+canvas {
+  display: none;
+  margin: 30px auto;
+  background: white;
+  border-radius: 10px;
+}
+</style>
+</head>
+
+<body>
+
+<header>
+  <img src="logo-ibero.png" alt="IBERO">
+  <h2>Rueda Emocional – Retroalimentación de Calidad</h2>
+</header>
+
+<p>Haz clic en la emoción que represente cómo te sientes.</p>
+
+<div id="wheel">
+  <button class="btn1" onclick="abrir('alegria','#4caf50')">Alegría</button>
+  <button class="btn2" onclick="abrir('miedo','#2196f3')">Miedo</button>
+  <button class="btn3" onclick="abrir('tristeza','#3f51b5')">Tristeza</button>
+  <button class="btn4" onclick="abrir('sorpresa','#ffc107')">Sorpresa</button>
+  <button class="btn5" onclick="abrir('ira','#f44336')">Ira</button>
+</div>
+
+<button onclick="mostrarEstadisticas()" style="padding:12px 25px;font-size:16px;">
+📊 Ver estadísticas emocionales
+</button>
+
+<canvas id="grafica" width="420" height="300"></canvas>
+
+<footer style="font-size:12px;color:#555;margin:20px;">
+Recurso educativo de uso interno – Universidad Iberoamericana.  
+Imágenes utilizadas con fines pedagógicos, sin propósito comercial.
+</footer>
+
+<div id="modal" class="modal">
+  <div id="contenido"></div>
+</div>
+
+<script>
+let giro = 0;
+
+let emociones = JSON.parse(localStorage.getItem("emociones")) || {
+  alegria:0, miedo:0, tristeza:0, ira:0, sorpresa:0
+};
+
+function abrir(emocion, color) {
+  emociones[emocion]++;
+  localStorage.setItem("emociones", JSON.stringify(emociones));
+
+  brillos(emocion);
+
+  let textos = {
+    alegria: "Reconocimiento y logro.",
+    miedo: "Temor a la evaluación.",
+    tristeza: "Desmotivación.",
+    ira: "Frustración.",
+    sorpresa: "Cambio inesperado."
+  };
+
+  let modal = document.getElementById("modal");
+  modal.style.background = color;
+  modal.style.display = "block";
+  document.getElementById("contenido").innerHTML = `
+    <img src="${emocion}.png">
+    <h2>${emocion.toUpperCase()}</h2>
+    <p>${textos[emocion]}</p>
+    <button onclick="cerrar()">Volver a girar la rueda</button>
+  `;
+}
+
+function cerrar() {
+  document.getElementById("modal").style.display = "none";
+  giro += 360;
+  document.getElementById("wheel").style.transform = "rotate("+giro+"deg)";
+}
+
+function brillos(emocion) {
+  for(let i=0;i<6;i++){
+    let img = document.createElement("img");
+    img.src = emocion + ".png";
+    img.className = "brillo";
+    img.style.left = Math.random()*100 + "vw";
+    document.body.appendChild(img);
+    setTimeout(()=>img.remove(),2500);
+  }
+}
+
+function mostrarEstadisticas(){
+  let c = document.getElementById("grafica");
+  c.style.display="block";
+  let ctx = c.getContext("2d");
+  ctx.clearRect(0,0,420,300);
+
+  let nombres=["Alegría","Miedo","Tristeza","Ira","Sorpresa"];
+  let valores=[emociones.alegria,emociones.miedo,emociones.tristeza,emociones.ira,emociones.sorpresa];
+  let colores=["#4caf50","#2196f3","#3f51b5","#f44336","#ffc107"];
+  let max=Math.max(...valores,1);
+
+  valores.forEach((v,i)=>{
+    let h=(v/max)*200;
+    ctx.fillStyle=colores[i];
+    ctx.fillRect(60+i*65,260-h,40,h);
+    ctx.fillStyle="#000";
+    ctx.fillText(nombres[i],50+i*65,280);
+    ctx.fillText(v,70+i*65,250-h);
+  });
+}
+</script>
+
+</body>
+</html>
